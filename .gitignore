@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.vscode/
+.idea/
+env/
+venv/
+*.egg-info/
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg
+
+# Logs
+*.log
+
+# Model and large binaries (optional — commit if small or host externally)
+# Uncomment the next line to ignore large model files instead of committing them
+# *.h5
