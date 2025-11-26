@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pickle
-import joblib 
+import joblib
 from keras.models import load_model
 import plotly.graph_objects as go
 import yfinance as yf
@@ -14,17 +14,19 @@ st.set_page_config(page_title="Stock Prediction Dashboard", layout="wide")
 model = load_model("stock_lstm_model.h5")
 
 scaler = joblib.load("scaler.pkl")
-
 # ---------------------- INDICATORS ----------------------
 def add_indicators(df):
     df["MA20"] = df["Close"].rolling(20).mean()
     df["MA50"] = df["Close"].rolling(50).mean()
+
     delta = df["Close"].diff()
     gain = np.where(delta > 0, delta, 0)
     loss = np.where(delta < 0, -delta, 0)
+
     avg_gain = pd.Series(gain).rolling(14).mean()
     avg_loss = pd.Series(loss).rolling(14).mean()
     rs = avg_gain / avg_loss
+
     df["RSI"] = 100 - (100 / (1 + rs))
     return df
 
@@ -54,7 +56,9 @@ if menu == "ℹ️ About":
     """)
     st.stop()
 
-# ---------------------- CSV PREDICTION ----------------------
+# ================================
+# 📁 CSV PREDICTION
+# ================================
 if menu == "📁 Predict using CSV":
     st.title("📁 Stock Prediction (Upload CSV)")
 
@@ -68,7 +72,9 @@ if menu == "📁 Predict using CSV":
         column = st.selectbox("Select price column to predict", df.columns)
 
         data = df[[column]].values
-        scaled_data = scaler.transform(data)
+
+        # FIX 1 — reshape before scaling
+        scaled_data = scaler.transform(data.reshape(-1, 1))
 
         # Windowing
         window_size = 60
@@ -91,7 +97,8 @@ if menu == "📁 Predict using CSV":
         fig = go.Figure()
         fig.add_trace(go.Scatter(y=real_prices.flatten(), name="Real Price"))
         fig.add_trace(go.Scatter(y=predictions.flatten(), name="Predicted Price"))
-        fig.update_layout(title="Real vs Predicted Prices", xaxis_title="Day", yaxis_title="Price")
+        fig.update_layout(title="Real vs Predicted Prices", 
+                          xaxis_title="Day", yaxis_title="Price")
         st.plotly_chart(fig, use_container_width=True)
 
         # Download Button
@@ -102,7 +109,9 @@ if menu == "📁 Predict using CSV":
         st.download_button("Download Predictions", pred_df.to_csv(index=False),
                            file_name="predictions.csv")
 
-# ---------------------- LIVE DATA PREDICTION ----------------------
+# ================================
+# 🌐 LIVE STOCK PREDICTION
+# ================================
 if menu == "🌐 Predict using Live Data":
     st.title("🌐 Predict Using Live Stock Data (No CSV Required)")
 
@@ -127,12 +136,14 @@ if menu == "🌐 Predict using Live Data":
             column = st.selectbox("Select price column", ["Close", "Open", "High", "Low"])
 
             data = df[[column]].values
-            scaled = scaler.transform(data)
+
+            # FIX 2 — reshape before scaling
+            scaled = scaler.transform(data.reshape(-1, 1))
 
             window_size = 60
             x_input = []
             for i in range(window_size, len(scaled)):
-                x_input.append(scaled[i-window_size:i, 0])
+                x_input.append(scaled[i - window_size:i, 0])
 
             x_input = np.array(x_input).reshape(-1, window_size, 1)
 
@@ -149,7 +160,9 @@ if menu == "🌐 Predict using Live Data":
                               xaxis_title="Day", yaxis_title="Price")
             st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------- NEXT 30 DAYS FORECAST ----------------------
+# ================================
+# 🔮 NEXT 30 DAYS FORECAST
+# ================================
 if menu == "🔮 Predict Next 30 Days":
     st.title("🔮 Forecast Next 30 Days")
 
@@ -163,7 +176,9 @@ if menu == "🔮 Predict Next 30 Days":
             st.stop()
 
         last_60 = df["Close"].values[-60:].reshape(-1, 1)
-        scaled_60 = scaler.transform(last_60)
+
+        # FIX 3 — reshape before scaling
+        scaled_60 = scaler.transform(last_60.reshape(-1, 1))
 
         seq = scaled_60.reshape(1, 60, 1)
 
@@ -180,7 +195,6 @@ if menu == "🔮 Predict Next 30 Days":
         fig.add_trace(go.Scatter(y=future.flatten(), mode="lines+markers", name="Forecast"))
         fig.update_layout(title=f"{ticker} - Next 30 Days Forecast",
                           xaxis_title="Day", yaxis_title="Predicted Price")
-
         st.plotly_chart(fig, use_container_width=True)
 
         # Download file
