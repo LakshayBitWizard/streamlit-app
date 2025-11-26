@@ -4,17 +4,7 @@ import pandas as pd
 import pickle
 from keras.models import load_model
 import plotly.graph_objects as go
-import importlib.util
-
-spec = importlib.util.find_spec("yfinance")
-if spec is not None:
-    import importlib
-    yf = importlib.import_module("yfinance")
-    _HAVE_YFINANCE = True
-else:
-    yf = None
-    _HAVE_YFINANCE = False
-
+import yfinance as yf
 
 # ---------------------- PAGE CONFIG ----------------------
 st.set_page_config(page_title="Stock Prediction Dashboard", layout="wide")
@@ -112,11 +102,11 @@ if menu == "📁 Predict using CSV":
         st.download_button("Download Predictions", pred_df.to_csv(index=False),
                            file_name="predictions.csv")
 
-    ticker = st.text_input("Enter Stock Ticker (Example: AAPL, TSLA, TCS.NS, RELIANCE.NS)")
+# ---------------------- LIVE DATA PREDICTION ----------------------
+if menu == "🌐 Predict using Live Data":
+    st.title("🌐 Predict Using Live Stock Data (No CSV Required)")
 
-    if not _HAVE_YFINANCE:
-        st.error("The 'yfinance' package is not installed — run `pip install yfinance` and restart the app.")
-        st.stop()
+    ticker = st.text_input("Enter Stock Ticker (Example: AAPL, TSLA, TCS.NS, RELIANCE.NS)")
 
     if st.button("Fetch & Predict"):
         if ticker.strip() == "":
@@ -160,20 +150,12 @@ if menu == "📁 Predict using CSV":
             st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------- NEXT 30 DAYS FORECAST ----------------------
+if menu == "🔮 Predict Next 30 Days":
+    st.title("🔮 Forecast Next 30 Days")
+
+    ticker = st.text_input("Enter Stock Ticker (For Forecasting)")
+
     if st.button("Predict 30 Days"):
-        if not _HAVE_YFINANCE:
-            st.error("The 'yfinance' package is not installed — run `pip install yfinance` and restart the app.")
-            st.stop()
-
-        if ticker.strip() == "":
-            st.error("Please enter a valid stock ticker.")
-            st.stop()
-
-        df = yf.download(ticker, period="5y")
-
-        if df.empty or len(df) < 60:
-            st.error("Need at least 60 days of data!")
-            st.stop()
         df = yf.download(ticker, period="5y")
 
         if len(df) < 60:
