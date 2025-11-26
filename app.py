@@ -7,9 +7,27 @@ import plotly.graph_objects as go
 
 # Load Model & Scaler
 model = load_model("stock_lstm_model.h5")
+import joblib
 
-with open("scaler.pkl", "rb") as f:
-    scaler = pickle.load(f)
+scaler = None
+# Try joblib first, fall back to pickle if joblib fails
+try:
+    scaler = joblib.load("scaler.pkl")
+except Exception:
+    try:
+        with open("scaler.pkl", "rb") as f:
+            scaler = pickle.load(f)
+    except FileNotFoundError:
+        st.error("Scaler file 'scaler.pkl' not found. Please ensure the file exists in the working directory.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Failed to load scaler: {e}")
+        st.stop()
+
+# Validate scaler object
+if not (hasattr(scaler, "transform") and hasattr(scaler, "inverse_transform")):
+    st.error("Loaded scaler is invalid or corrupted. Please check 'scaler.pkl'.")
+    st.stop()
 
 st.set_page_config(page_title="Stock Prediction", layout="wide")
 
