@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pickle
+import joblib 
 from keras.models import load_model
 import plotly.graph_objects as go
 import yfinance as yf
@@ -12,8 +13,7 @@ st.set_page_config(page_title="Stock Prediction Dashboard", layout="wide")
 # ---------------------- LOAD MODEL & SCALER ----------------------
 model = load_model("stock_lstm_model.h5")
 
-with open("scaler.pkl", "rb") as f:
-    scaler = pickle.load(f)
+scaler = joblib.load("scaler.pkl")
 
 # ---------------------- INDICATORS ----------------------
 def add_indicators(df):
